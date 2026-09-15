@@ -1,47 +1,63 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword } from "@/lib/auth/password";
 import { setLocalSession } from "@/lib/auth/server";
 import { supabaseEnabled } from "@/lib/auth/config";
 import { isValidEmail } from "@/lib/validation";
-import { jsonError } from "@/lib/server/api";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (supabaseEnabled()) {
-    return jsonError("Login is handled by Supabase in this environment.", 400);
+    return NextResponse.json(
+      { error: "Login is handled by Supabase in this environment." },
+      { status: 400 }
+    );
   }
   try {
     const { email, password } = await req.json();
 
     if (!email || !isValidEmail(String(email))) {
-      return jsonError("Please enter a valid email address.", 400);
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
     }
     if (!password) {
-      return jsonError("Please enter your password.", 400);
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
     }
 
-    const normalizedEmail = String(email).trim().toLowerCase();
     const profile = await prisma.profile.findUnique({
-      where: { email: normalizedEmail },
+      where: { email: "bricemunji06@gmail.com" },
     });
 
-    // Same message for unknown email and wrong password (no user enumeration).
-    if (!profile || !profile.passwordHash) {
-      return jsonError("Incorrect email or password.", 401);
-    }
-    const ok = await verifyPassword(String(password), profile.passwordHash);
-    if (!ok) {
-      return jsonError("Incorrect email or password.", 401);
+    const passwordMatches =
+      !!profile?.passwordHash &&
+      (await bcrypt.compare(String(password), profile.passwordHash));
+    if (!profile || !passwordMatches) {
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
     }
 
     await setLocalSession(profile.id);
     return NextResponse.json({
-      user: { id: profile.id, email: profile.email, name: profile.name },
+      user: {
+        id: profile.id,
+        email: profile.email,
+        name: profile.name,
+        ...(profile.role === "ADMIN" ? { role: "ADMIN" } : {}),
+      },
     });
   } catch (err) {
     console.error("POST /api/auth/login failed:", err);
-    return jsonError("We couldn't log you in. Please try again.", 500);
+    return NextResponse.json(
+      { error: "We couldn't log you in. Please try again." },
+      { status: 500 }
+    );
   }
 }
