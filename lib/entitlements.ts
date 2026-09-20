@@ -16,6 +16,7 @@ export interface UsageCounts {
   cvCount: number;
   pdfExportCount: number;
   applicationCount: number;
+  atsAnalysisCount: number;
 }
 
 export interface EntitlementContext {
@@ -51,8 +52,9 @@ export function planHasFeature(planId: PlanId, feature: Feature): boolean {
     case "APPLICATION_EMAILS":
       return true; // available on all plans (free has a monthly limit for PDF)
     case "AI_ASSISTANT":
+      return false; // reserved for a future sprint
     case "ATS_ANALYZER":
-      return false; // reserved for a future sprint (Pro will unlock)
+      return l.atsAnalyzer;
     default:
       return false;
   }
@@ -125,6 +127,24 @@ export function canAccess(
         reason: "upgrade",
         feature,
         message: "Cover letters are part of CVForge Pro.",
+      };
+    }
+    case "ATS_ANALYZER": {
+      if (!l.atsAnalyzer) {
+        return {
+          allowed: false,
+          reason: "upgrade",
+          feature,
+          message: "ATS checks are part of CVForge Pro.",
+        };
+      }
+      if (l.maxAtsAnalyses === null) return { allowed: true };
+      if (ctx.usage.atsAnalysisCount < l.maxAtsAnalyses) return { allowed: true };
+      return {
+        allowed: false,
+        reason: "limit",
+        feature,
+        message: "You've used your free ATS analysis limit for this month.",
       };
     }
     default:

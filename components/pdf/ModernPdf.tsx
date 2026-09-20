@@ -1,3 +1,4 @@
+import React from "react";
 import { Page, View, Text, StyleSheet } from "@react-pdf/renderer";
 import type { CVData } from "@/lib/cv-types";
 import { pdfDate, contactList, PdfFlags, SKILL_PCT } from "./pdf-utils";
@@ -99,7 +100,7 @@ export function ModernPdf({ data, f }: { data: CVData; f: PdfFlags }) {
         {f.experience ? (
           <Section title="Experience">
             {data.experiences.map((e) => (
-              <View key={e.id} style={s.entry} wrap={false}>
+              <View key={e.id} style={s.entry}>
                 <View style={s.rowBetween}>
                   <Text style={s.entryTitle}>{e.position || "Position"}</Text>
                   <Text style={s.dates}>{pdfDate(e.startDate, e.endDate, e.current)}</Text>
@@ -116,7 +117,7 @@ export function ModernPdf({ data, f }: { data: CVData; f: PdfFlags }) {
         {f.education ? (
           <Section title="Education">
             {data.educations.map((ed) => (
-              <View key={ed.id} style={s.entry} wrap={false}>
+              <View key={ed.id} style={s.entry}>
                 <View style={s.rowBetween}>
                   <Text style={s.entryTitle}>
                     {ed.degree || "Degree"}
@@ -135,7 +136,7 @@ export function ModernPdf({ data, f }: { data: CVData; f: PdfFlags }) {
           <Section title="Skills">
             <View style={s.skillGrid}>
               {data.skills.map((sk) => (
-                <View key={sk.id} style={s.skill} wrap={false}>
+                <View key={sk.id} style={s.skill}>
                   <View style={s.skillRow}>
                     <Text style={s.skillName}>{sk.name || "Skill"}</Text>
                     <Text style={s.skillLevel}>{sk.level}</Text>
@@ -152,7 +153,7 @@ export function ModernPdf({ data, f }: { data: CVData; f: PdfFlags }) {
         {f.projects ? (
           <Section title="Projects">
             {data.projects.map((pr) => (
-              <View key={pr.id} style={s.entry} wrap={false}>
+              <View key={pr.id} style={s.entry}>
                 <View style={s.rowBetween}>
                   <Text style={s.entryTitle}>{pr.name || "Project"}</Text>
                   {pr.url.trim() ? (
@@ -176,7 +177,7 @@ export function ModernPdf({ data, f }: { data: CVData; f: PdfFlags }) {
               <View style={s.col}>
                 <Heading>Certifications</Heading>
                 {data.certifications.map((c) => (
-                  <View key={c.id} style={{ marginBottom: 5 }} wrap={false}>
+                  <View key={c.id} style={{ marginBottom: 5 }}>
                     <Text style={s.liName}>{c.name || "Certification"}</Text>
                     <Text style={s.liMeta}>
                       {[c.issuer, c.date].filter(Boolean).join(" · ")}
@@ -194,7 +195,6 @@ export function ModernPdf({ data, f }: { data: CVData; f: PdfFlags }) {
                   <View
                     key={l.id}
                     style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}
-                    wrap={false}
                   >
                     <Text style={s.liName}>{l.name || "Language"}</Text>
                     <Text style={s.liMeta}>{l.level}</Text>

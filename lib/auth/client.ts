@@ -3,9 +3,21 @@
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function isSupabaseConfigured(): boolean {
+  const provider =
+    process.env.NEXT_PUBLIC_AUTH_PROVIDER || process.env.AUTH_PROVIDER || "";
+
+  if (provider === "local") return false;
+  if (provider === "supabase") {
+    return Boolean(
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+  }
+
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+      !process.env.NEXT_PUBLIC_DISABLE_SUPABASE
   );
 }
 
@@ -66,20 +78,50 @@ export async function signInWithPassword(
 }
 
 export async function signInWithGoogle(): Promise<Result> {
-  if (!isSupabaseConfigured()) {
-    return {
-      error:
-        "Google sign-in requires Supabase. Add your Supabase keys to enable it, or continue with email.",
-    };
+  const publicGoogleClientId =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+  const publicGoogleClientSecret =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+
+  const isLocalGoogleAuth = Boolean(
+    process.env.NEXT_PUBLIC_AUTH_PROVIDER === "local" ||
+      process.env.AUTH_PROVIDER === "local" ||
+      (publicGoogleClientId && publicGoogleClientSecret)
+  );
+
+  if (isLocalGoogleAuth) {
+    if (!publicGoogleClientId || !publicGoogleClientSecret) {
+      return {
+        error:
+          "Google sign-in is not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable it.",
+      };
+    }
+
+    const next = encodeURIComponent(window.location.pathname || "/dashboard");
+    window.location.assign(`/api/auth/google/start?next=${next}`);
+    return {};
   }
-  const supabase = createSupabaseBrowserClient();
-  if (!supabase) return { error: "Authentication is not configured." };
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: { redirectTo: `${window.location.origin}/auth/callback` },
-  });
-  if (error) return { error: error.message };
-  return {};
+
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return { error: "Authentication is not configured." };
+
+    const redirectBase =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${redirectBase}/auth/callback` },
+    });
+    if (error) return { error: error.message };
+    return {};
+  }
+
+  return {
+    error:
+      "Google sign-in is not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable it.",
+  };
 }
 
 export async function logout(): Promise<void> {

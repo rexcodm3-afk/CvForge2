@@ -13,6 +13,7 @@ import {
   Briefcase,
   CreditCard,
   ShieldCheck,
+  FileCheck2,
 } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { logout } from "@/lib/auth/client";
@@ -27,6 +28,7 @@ export interface HeaderUser {
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard#cvs", label: "My CVs", icon: FileText, match: "/builder" },
+  { href: "/ats", label: "Check My CV", icon: FileCheck2 },
   { href: "/cover-letters", label: "Cover Letters", icon: Mail },
   { href: "/applications", label: "Applications", icon: Briefcase },
 ];

@@ -52,18 +52,25 @@ export function currentPeriod(now = new Date()): {
 /** Live usage counts (the source of truth for limit enforcement). */
 export async function getUsageCounts(userId: string): Promise<UsageCounts> {
   const { periodStart, periodEnd } = currentPeriod();
-  const [cvCount, applicationCount, pdfExportCount] = await Promise.all([
-    prisma.cV.count({ where: { userId } }),
-    prisma.application.count({ where: { userId } }),
-    prisma.exportEvent.count({
-      where: {
-        userId,
-        type: "PDF_DOWNLOAD",
-        createdAt: { gte: periodStart, lt: periodEnd },
-      },
-    }),
-  ]);
-  return { cvCount, applicationCount, pdfExportCount };
+  const [cvCount, applicationCount, pdfExportCount, atsAnalysisCount] =
+    await Promise.all([
+      prisma.cV.count({ where: { userId } }),
+      prisma.application.count({ where: { userId } }),
+      prisma.exportEvent.count({
+        where: {
+          userId,
+          type: "PDF_DOWNLOAD",
+          createdAt: { gte: periodStart, lt: periodEnd },
+        },
+      }),
+      prisma.atsAnalysis.count({
+        where: {
+          userId,
+          createdAt: { gte: periodStart, lt: periodEnd },
+        },
+      }),
+    ]);
+  return { cvCount, applicationCount, pdfExportCount, atsAnalysisCount };
 }
 
 /** Best-effort: keep a Usage row for the current period (analytics / resets). */
@@ -78,6 +85,7 @@ export async function syncUsageRow(userId: string): Promise<void> {
         cvCount: counts.cvCount,
         pdfExportCount: counts.pdfExportCount,
         applicationCount: counts.applicationCount,
+        atsAnalysisCount: counts.atsAnalysisCount,
       },
       create: {
         userId,
@@ -86,6 +94,7 @@ export async function syncUsageRow(userId: string): Promise<void> {
         cvCount: counts.cvCount,
         pdfExportCount: counts.pdfExportCount,
         applicationCount: counts.applicationCount,
+        atsAnalysisCount: counts.atsAnalysisCount,
       },
     });
   } catch (err) {

@@ -14,9 +14,21 @@
  * and switch to Supabase simply by setting the env vars — no code changes.
  */
 export function supabaseEnabled(): boolean {
+  const provider =
+    process.env.AUTH_PROVIDER || process.env.NEXT_PUBLIC_AUTH_PROVIDER || "";
+
+  if (provider === "local") return false;
+  if (provider === "supabase") {
+    return Boolean(
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+  }
+
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+      !process.env.NEXT_PUBLIC_DISABLE_SUPABASE
   );
 }
 

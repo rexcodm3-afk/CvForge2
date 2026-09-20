@@ -13,8 +13,10 @@ export interface PlanLimits {
   /** PDF exports allowed per billing period (calendar month for free). */
   maxPdfExportsPerPeriod: number | null;
   maxApplications: number | null;
+  maxAtsAnalyses: number | null;
   coverLetters: boolean;
   premiumTemplates: boolean;
+  atsAnalyzer: boolean;
 }
 
 export interface Plan {
@@ -35,8 +37,10 @@ const PRO_LIMITS: PlanLimits = {
   maxCVs: null,
   maxPdfExportsPerPeriod: null,
   maxApplications: null,
+  maxAtsAnalyses: null,
   coverLetters: true,
   premiumTemplates: true,
+  atsAnalyzer: true,
 };
 
 export const PLANS: Record<PlanId, Plan> = {
@@ -52,14 +56,17 @@ export const PLANS: Record<PlanId, Plan> = {
       "Classic template",
       "1 PDF download / month",
       "Up to 3 job applications",
+      "ATS check limit: 3 / month",
       "Basic application email",
     ],
     limits: {
       maxCVs: 1,
       maxPdfExportsPerPeriod: 1,
       maxApplications: 3,
+      maxAtsAnalyses: 3,
       coverLetters: false,
       premiumTemplates: false,
+      atsAnalyzer: true,
     },
   },
   pro_monthly: {
@@ -76,8 +83,8 @@ export const PLANS: Record<PlanId, Plan> = {
       "Unlimited job applications",
       "Cover letters",
       "Application emails",
-      "Future AI features",
-      "Future ATS features",
+      "ATS analysis",
+      "Job-match scoring",
     ],
     limits: PRO_LIMITS,
   },
@@ -95,8 +102,8 @@ export const PLANS: Record<PlanId, Plan> = {
       "Unlimited job applications",
       "Cover letters",
       "Application emails",
-      "Future AI features",
-      "Future ATS features",
+      "ATS analysis",
+      "Job-match scoring",
     ],
     limits: PRO_LIMITS,
   },

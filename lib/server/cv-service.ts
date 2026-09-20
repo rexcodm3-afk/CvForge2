@@ -87,58 +87,64 @@ export async function updateCV(
 
   const n = normalizeCVInput(body);
 
-  const updated = await prisma.$transaction(async (tx) => {
-    await tx.cV.update({
-      where: { id: cvId },
-      data: {
-        ...(n.title !== undefined ? { title: n.title || "Untitled CV" } : {}),
-        template: n.template,
-        personalInfo: n.personal as unknown as Prisma.InputJsonValue,
-        summary: n.summary,
-      },
-    });
-
-    await tx.experience.deleteMany({ where: { cvId } });
-    if (n.experiences.length)
-      await tx.experience.createMany({
-        data: n.experiences.map((e) => ({ ...e, cvId })),
+  const updated = await prisma.$transaction(
+    async (tx) => {
+      await tx.cV.update({
+        where: { id: cvId },
+        data: {
+          ...(n.title !== undefined ? { title: n.title || "Untitled CV" } : {}),
+          template: n.template,
+          personalInfo: n.personal as unknown as Prisma.InputJsonValue,
+          summary: n.summary,
+        },
       });
 
-    await tx.education.deleteMany({ where: { cvId } });
-    if (n.educations.length)
-      await tx.education.createMany({
-        data: n.educations.map((e) => ({ ...e, cvId })),
-      });
+      await tx.experience.deleteMany({ where: { cvId } });
+      if (n.experiences.length)
+        await tx.experience.createMany({
+          data: n.experiences.map((e) => ({ ...e, cvId })),
+        });
 
-    await tx.skill.deleteMany({ where: { cvId } });
-    if (n.skills.length)
-      await tx.skill.createMany({
-        data: n.skills.map((s) => ({ ...s, cvId })),
-      });
+      await tx.education.deleteMany({ where: { cvId } });
+      if (n.educations.length)
+        await tx.education.createMany({
+          data: n.educations.map((e) => ({ ...e, cvId })),
+        });
 
-    await tx.project.deleteMany({ where: { cvId } });
-    if (n.projects.length)
-      await tx.project.createMany({
-        data: n.projects.map((p) => ({ ...p, cvId })),
-      });
+      await tx.skill.deleteMany({ where: { cvId } });
+      if (n.skills.length)
+        await tx.skill.createMany({
+          data: n.skills.map((s) => ({ ...s, cvId })),
+        });
 
-    await tx.certification.deleteMany({ where: { cvId } });
-    if (n.certifications.length)
-      await tx.certification.createMany({
-        data: n.certifications.map((c) => ({ ...c, cvId })),
-      });
+      await tx.project.deleteMany({ where: { cvId } });
+      if (n.projects.length)
+        await tx.project.createMany({
+          data: n.projects.map((p) => ({ ...p, cvId })),
+        });
 
-    await tx.language.deleteMany({ where: { cvId } });
-    if (n.languages.length)
-      await tx.language.createMany({
-        data: n.languages.map((l) => ({ ...l, cvId })),
-      });
+      await tx.certification.deleteMany({ where: { cvId } });
+      if (n.certifications.length)
+        await tx.certification.createMany({
+          data: n.certifications.map((c) => ({ ...c, cvId })),
+        });
 
-    return tx.cV.findUniqueOrThrow({
-      where: { id: cvId },
-      select: { updatedAt: true },
-    });
-  });
+      await tx.language.deleteMany({ where: { cvId } });
+      if (n.languages.length)
+        await tx.language.createMany({
+          data: n.languages.map((l) => ({ ...l, cvId })),
+        });
+
+      return tx.cV.findUniqueOrThrow({
+        where: { id: cvId },
+        select: { updatedAt: true },
+      });
+    },
+    {
+      timeout: 30000,
+      maxWait: 30000,
+    }
+  );
 
   return { updatedAt: updated.updatedAt.toISOString() };
 }

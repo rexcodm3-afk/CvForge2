@@ -25,6 +25,7 @@ model Profile {
   cvs          CV[]
   coverLetters      CoverLetter[]
   applications      Application[]
+  atsAnalyses       AtsAnalysis[]
   applicationEmails ApplicationEmail[]
   exportEvents ExportEvent[]
   subscription Subscription?
@@ -126,6 +127,7 @@ model Usage {
   cvCount          Int      @default(0)
   pdfExportCount   Int      @default(0)
   applicationCount Int      @default(0)
+  atsAnalysisCount Int      @default(0)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -243,6 +245,23 @@ model ApplicationEmail {
   updatedAt     DateTime     @updatedAt
 
   @@index([userId])
+}
+
+model AtsAnalysis {
+  id              String   @id @default(cuid())
+  userId          String
+  user            Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cvId            String?
+  jobTitle        String   @default("")
+  jobDescription  String   @default("")
+  score           Int      @default(0)
+  analysis        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+  @@index([cvId])
+  @@index([createdAt])
 }
 
 model Experience {
