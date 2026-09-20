@@ -86,7 +86,7 @@ export async function POST(req: Request) {
         jobTitle: payload.jobTitle,
         jobDescription: payload.jobDescription,
         score: analysis.score,
-        analysis: analysis as Prisma.InputJsonValue,
+        analysis: analysis as unknown as Prisma.InputJsonValue,
       },
     });
 

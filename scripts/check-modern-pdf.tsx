@@ -2,6 +2,7 @@ import React from "react";
 import { Document, renderToBuffer } from "@react-pdf/renderer";
 import { ModernPdf } from "../components/pdf/ModernPdf";
 import { pdfFlags } from "../components/pdf/pdf-utils";
+import type { CVData } from "../lib/cv-types";
 
 const base = {
   template: "modern" as const,
@@ -70,12 +71,12 @@ const base = {
   ],
 };
 
-const onePage = {
+const onePage: CVData = {
   ...base,
   experiences: [base.experiences[0]],
   projects: [base.projects[0]],
   certifications: [base.certifications[0]],
-};
+} as CVData;
 
 const manyExperiences = Array.from({ length: 8 }, (_, i) => ({
   ...base.experiences[0],
@@ -86,7 +87,7 @@ const manyExperiences = Array.from({ length: 8 }, (_, i) => ({
     "Led roadmap planning, stakeholder alignment, analytics reporting, and cross-functional delivery across a fast-moving SaaS platform with measurable business outcomes.",
 }));
 
-const twoPage = {
+const twoPage: CVData = {
   ...base,
   experiences: manyExperiences,
   projects: [
@@ -111,7 +112,7 @@ const twoPage = {
     url: "",
   })),
   languages: [...base.languages, { id: "l-3", name: "Spanish", level: "Conversational" }],
-};
+} as CVData;
 
 (async () => {
   const oneBuf = await renderToBuffer(

@@ -264,29 +264,33 @@ export function analyzeCv(
   if (qualityScore === 0) {
     return {
       score: 0,
+      matchScore: 0,
       estimated: true,
       strengths: [],
-      weaknesses: [
-        "The CV is missing required sections and contact details.",
-        "Missing professional summary, skills, work history, and education information.",
-      ],
+      weaknesses: ["Unable to process document content."],
       missingKeywords: [],
-      recommendations: [
-        "Add your full name, email or phone number, summary, work experience, skills, and education.",
-        "Complete the CV with role-specific keywords before submitting to employers.",
-      ],
-      missingSections,
+      matchingKeywords: [],
+      missingSkills: [],
+      matchingSkills: [],
+      relevantExperience: [],
+      recommendations: ["Ensure the uploaded CV contains extractable text."],
+      missingSections: [],
     };
   }
 
-  return {
+ return {
     score: qualityScore,
+    matchScore: qualityScore,
     estimated: true,
     strengths: strengths.slice(0, 4),
     weaknesses: weaknesses.slice(0, 4),
     missingKeywords: [],
-    recommendations: recommendations.slice(0, 3),
-    missingSections,
+    matchingKeywords: [],
+    missingSkills: [],
+    matchingSkills: [],
+    relevantExperience: [],
+    recommendations: recommendations.slice(0, 4),
+    missingSections: [],
   };
 }
 
