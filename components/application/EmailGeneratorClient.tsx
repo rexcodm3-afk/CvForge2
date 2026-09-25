@@ -24,22 +24,27 @@ export function EmailGeneratorClient({
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [generated, setGenerated] = useState(false);
+  const [generationCount, setGenerationCount] = useState(0);
   const { copied, copy } = useCopy();
 
   const selectedCv = cvs.find((c) => c.id === cvId) ?? null;
 
   const generate = () => {
-    const gen = generateApplicationEmail({
-      applicantName: selectedCv?.name || user.name || "",
-      jobTitle,
-      companyName,
-      hiringManager,
-      applicantEmail: selectedCv?.email,
-      applicantPhone: selectedCv?.phone,
-    });
+    const gen = generateApplicationEmail(
+      {
+        applicantName: selectedCv?.name || user.name || "",
+        jobTitle,
+        companyName,
+        hiringManager,
+        applicantEmail: selectedCv?.email,
+        applicantPhone: selectedCv?.phone,
+      },
+      generationCount
+    );
     setSubject(gen.subject);
     setContent(gen.content);
     setGenerated(true);
+    setGenerationCount((count) => count + 1);
   };
 
   return (

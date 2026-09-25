@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import {
   motion,
   useReducedMotion,
@@ -88,10 +89,30 @@ export function Hero() {
             transition={{ duration: 0.6, ease, delay: 0.19 }}
             className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center"
           >
-            <Button href="/signup" size="lg" className="group">
-              Create My CV
-              <ArrowRight className="h-[18px] w-[18px] transition-transform duration-200 group-hover:translate-x-0.5" />
-            </Button>
+            <SignedOut>
+              <SignUpButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                <button
+                  type="button"
+                  className="group inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-base font-semibold text-white shadow-sm transition-colors hover:bg-brand-700"
+                >
+                  Create My CV
+                  <ArrowRight className="h-[18px] w-[18px] transition-transform duration-200 group-hover:translate-x-0.5" />
+                </button>
+              </SignUpButton>
+              <SignInButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-xl border border-line bg-surface px-5 py-3 text-base font-semibold text-ink transition-colors hover:bg-ink/[0.04]"
+                >
+                  Sign In
+                </button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <div className="flex items-center gap-3">
+                <UserButton afterSignOutUrl="/" />
+              </div>
+            </SignedIn>
             <Button href="/#templates" size="lg" variant="secondary">
               Explore Templates
             </Button>

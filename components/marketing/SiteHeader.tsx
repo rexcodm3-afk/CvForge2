@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
@@ -58,12 +59,27 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Button href="/login" variant="ghost" size="sm">
-            Log In
-          </Button>
-          <Button href="/signup" size="sm">
-            Create My CV
-          </Button>
+          <SignedOut>
+            <SignInButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-lg px-3.5 py-2 text-sm font-medium text-ink-soft transition-colors hover:text-ink"
+              >
+                Log In
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+              >
+                Create My CV
+              </button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton afterSignOutUrl="/" />
+          </SignedIn>
         </div>
 
         <button
@@ -98,12 +114,31 @@ export function SiteHeader() {
                 </Link>
               ))}
               <div className="mt-3 flex flex-col gap-2.5">
-                <Button href="/login" variant="secondary" onClick={() => setOpen(false)}>
-                  Log In
-                </Button>
-                <Button href="/signup" onClick={() => setOpen(false)}>
-                  Create My CV
-                </Button>
+                <SignedOut>
+                  <SignInButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-lg border border-line bg-surface px-4 py-2.5 text-base font-medium text-ink transition-colors hover:bg-ink/[0.04]"
+                      onClick={() => setOpen(false)}
+                    >
+                      Log In
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal" forceRedirectUrl="/dashboard" fallbackRedirectUrl="/dashboard">
+                    <button
+                      type="button"
+                      className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2.5 text-base font-medium text-white transition-colors hover:bg-brand-700"
+                      onClick={() => setOpen(false)}
+                    >
+                      Create My CV
+                    </button>
+                  </SignUpButton>
+                </SignedOut>
+                <SignedIn>
+                  <div className="flex justify-center">
+                    <UserButton afterSignOutUrl="/" />
+                  </div>
+                </SignedIn>
               </div>
             </nav>
           </motion.div>

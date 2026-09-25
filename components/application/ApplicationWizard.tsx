@@ -81,21 +81,26 @@ export function ApplicationWizard({
   const [emailSubject, setEmailSubject] = useState("");
   const [emailContent, setEmailContent] = useState("");
   const [emailTouched, setEmailTouched] = useState(false);
+  const [generationCount, setGenerationCount] = useState(0);
 
   const selectedCv = cvs.find((c) => c.id === cvId) ?? null;
 
   const buildEmail = () => {
-    const gen = generateApplicationEmail({
-      applicantName: selectedCv?.name || user.name || "",
-      jobTitle,
-      companyName,
-      applicantEmail: selectedCv?.email,
-      applicantPhone: selectedCv?.phone,
-      hasCoverLetter: Boolean(coverLetterId),
-    });
+    const gen = generateApplicationEmail(
+      {
+        applicantName: selectedCv?.name || user.name || "",
+        jobTitle,
+        companyName,
+        applicantEmail: selectedCv?.email,
+        applicantPhone: selectedCv?.phone,
+        hasCoverLetter: Boolean(coverLetterId),
+      },
+      generationCount
+    );
     setEmailSubject(gen.subject);
     setEmailContent(gen.content);
     setEmailTouched(false);
+    setGenerationCount((count) => count + 1);
   };
 
   const goNext = () => {

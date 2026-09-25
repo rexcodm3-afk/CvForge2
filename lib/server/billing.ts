@@ -49,28 +49,43 @@ export function currentPeriod(now = new Date()): {
   return { periodStart, periodEnd };
 }
 
+function emptyUsageCounts(): UsageCounts {
+  return {
+    cvCount: 0,
+    applicationCount: 0,
+    pdfExportCount: 0,
+    atsAnalysisCount: 0,
+  };
+}
+
 /** Live usage counts (the source of truth for limit enforcement). */
 export async function getUsageCounts(userId: string): Promise<UsageCounts> {
   const { periodStart, periodEnd } = currentPeriod();
-  const [cvCount, applicationCount, pdfExportCount, atsAnalysisCount] =
-    await Promise.all([
-      prisma.cV.count({ where: { userId } }),
-      prisma.application.count({ where: { userId } }),
-      prisma.exportEvent.count({
-        where: {
-          userId,
-          type: "PDF_DOWNLOAD",
-          createdAt: { gte: periodStart, lt: periodEnd },
-        },
-      }),
-      prisma.atsAnalysis.count({
-        where: {
-          userId,
-          createdAt: { gte: periodStart, lt: periodEnd },
-        },
-      }),
-    ]);
-  return { cvCount, applicationCount, pdfExportCount, atsAnalysisCount };
+
+  try {
+    const [cvCount, applicationCount, pdfExportCount, atsAnalysisCount] =
+      await Promise.all([
+        prisma.cV.count({ where: { userId } }),
+        prisma.application.count({ where: { userId } }),
+        prisma.exportEvent.count({
+          where: {
+            userId,
+            type: "PDF_DOWNLOAD",
+            createdAt: { gte: periodStart, lt: periodEnd },
+          },
+        }),
+        prisma.atsAnalysis.count({
+          where: {
+            userId,
+            createdAt: { gte: periodStart, lt: periodEnd },
+          },
+        }),
+      ]);
+    return { cvCount, applicationCount, pdfExportCount, atsAnalysisCount };
+  } catch (error) {
+    console.error("getUsageCounts failed; using zeroed fallback values:", error);
+    return emptyUsageCounts();
+  }
 }
 
 /** Best-effort: keep a Usage row for the current period (analytics / resets). */
@@ -107,7 +122,13 @@ export async function syncUsageRow(userId: string): Promise<void> {
  * Lazily expires a subscription whose paid period has ended.
  */
 export async function getPlanContext(userId: string): Promise<PlanContext> {
-  const sub = await prisma.subscription.findUnique({ where: { userId } });
+  let sub = null;
+  try {
+    sub = await prisma.subscription.findUnique({ where: { userId } });
+  } catch (error) {
+    console.error("getPlanContext: subscription lookup failed:", error);
+  }
+
   const usage = await getUsageCounts(userId);
   const now = new Date();
 

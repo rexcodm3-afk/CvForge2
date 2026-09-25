@@ -32,6 +32,18 @@ export function supabaseEnabled(): boolean {
   );
 }
 
+export function clerkEnabled(): boolean {
+  const provider =
+    process.env.AUTH_PROVIDER || process.env.NEXT_PUBLIC_AUTH_PROVIDER || "";
+
+  if (provider === "supabase" || provider === "local") return false;
+
+  return Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+      process.env.CLERK_SECRET_KEY
+  );
+}
+
 export const SESSION_COOKIE = "cvforge_session";
 
 /**

@@ -125,10 +125,26 @@ export async function signInWithGoogle(): Promise<Result> {
 }
 
 export async function logout(): Promise<void> {
+  const provider =
+    process.env.NEXT_PUBLIC_AUTH_PROVIDER || process.env.AUTH_PROVIDER || "";
+
+  if (provider === "clerk") {
+    try {
+      const clerk = (window as any)?.Clerk;
+      if (typeof clerk?.signOut === "function") {
+        await clerk.signOut({ redirectUrl: "/login" });
+        return;
+      }
+    } catch {
+      // Fall through to API logout below if Clerk is unavailable.
+    }
+  }
+
   if (isSupabaseConfigured()) {
     const supabase = createSupabaseBrowserClient();
     if (supabase) await supabase.auth.signOut();
   }
+
   // Always hit the server route to clear cookies in both modes.
   await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
 }

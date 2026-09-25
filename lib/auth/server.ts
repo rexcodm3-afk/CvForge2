@@ -1,8 +1,10 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import {
   SESSION_COOKIE,
+  clerkEnabled,
   supabaseEnabled,
   isBootstrapAdminEmail,
 } from "./config";
@@ -64,21 +66,75 @@ async function ensureProfile(input: {
   name?: string | null;
   avatarUrl?: string | null;
 }): Promise<AuthUser> {
-  const profile = await prisma.profile.upsert({
+  const normalizedEmail = input.email.trim();
+
+  const existingById = await prisma.profile.findUnique({
     where: { id: input.id },
-    update: {
-      email: input.email,
-      ...(input.name ? { name: input.name } : {}),
-      ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
-    },
-    create: {
+  });
+
+  if (existingById) {
+    if (existingById.email === normalizedEmail) {
+      const updated = await prisma.profile.update({
+        where: { id: input.id },
+        data: {
+          ...(input.name ? { name: input.name } : {}),
+          ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+        },
+      });
+      return toAuthUser(await withAdminBootstrap(updated));
+    }
+
+    const existingByEmail = await prisma.profile.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (existingByEmail && existingByEmail.id !== input.id) {
+      const merged = await prisma.profile.update({
+        where: { id: existingByEmail.id },
+        data: {
+          ...(existingByEmail.name || input.name ? { name: input.name ?? existingByEmail.name } : {}),
+          ...(existingByEmail.avatarUrl || input.avatarUrl ? { avatarUrl: input.avatarUrl ?? existingByEmail.avatarUrl } : {}),
+        },
+      });
+      return toAuthUser(await withAdminBootstrap(merged));
+    }
+
+    const updated = await prisma.profile.update({
+      where: { id: input.id },
+      data: {
+        email: normalizedEmail,
+        ...(input.name ? { name: input.name } : {}),
+        ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+      },
+    });
+    return toAuthUser(await withAdminBootstrap(updated));
+  }
+
+  const existingByEmail = await prisma.profile.findUnique({
+    where: { email: normalizedEmail },
+  });
+
+  if (existingByEmail) {
+    const merged = await prisma.profile.update({
+      where: { id: existingByEmail.id },
+      data: {
+        ...(existingByEmail.name || input.name ? { name: input.name ?? existingByEmail.name } : {}),
+        ...(existingByEmail.avatarUrl || input.avatarUrl ? { avatarUrl: input.avatarUrl ?? existingByEmail.avatarUrl } : {}),
+      },
+    });
+    return toAuthUser(await withAdminBootstrap(merged));
+  }
+
+  const created = await prisma.profile.create({
+    data: {
       id: input.id,
-      email: input.email,
+      email: normalizedEmail,
       name: input.name ?? null,
       avatarUrl: input.avatarUrl ?? null,
     },
   });
-  return toAuthUser(await withAdminBootstrap(profile));
+
+  return toAuthUser(await withAdminBootstrap(created));
 }
 
 /**
@@ -87,6 +143,26 @@ async function ensureProfile(input: {
  * the client.
  */
 export async function getAuthUser(): Promise<AuthUser | null> {
+  if (clerkEnabled()) {
+    const { userId } = await auth();
+    if (!userId) return null;
+
+    const clerkUser = await currentUser();
+    if (!clerkUser) return null;
+
+    const email = clerkUser.emailAddresses[0]?.emailAddress || "";
+    const fullName = [clerkUser.firstName, clerkUser.lastName]
+      .filter(Boolean)
+      .join(" ") || null;
+
+    return ensureProfile({
+      id: userId,
+      email,
+      name: fullName,
+      avatarUrl: clerkUser.imageUrl || null,
+    });
+  }
+
   if (supabaseEnabled()) {
     const supabase = createSupabaseServerClient();
     if (!supabase) return null;
